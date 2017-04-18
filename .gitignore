@@ -87,3 +87,4 @@ ENV/
 
 # Rope project settings
 .ropeproject
+cifar-10-batches-py
