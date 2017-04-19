@@ -1,5 +1,6 @@
-import numpy as np
 from abc import ABC, abstractmethod
+
+import numpy as np
 
 
 class Initializer(ABC):
@@ -21,6 +22,11 @@ class CenteredNormal(Initializer):
         return np.random.normal(0, self.std, shape)
 
 
+class PositiveNormal(CenteredNormal):
+    def new_matrix(self, shape):
+        return np.abs(super().new_matrix(shape))
+
+
 class Xavier(Initializer):
     def new_matrix(self, shape):
         # standard dev = 1 / sqrt (layer output size)
@@ -28,7 +34,7 @@ class Xavier(Initializer):
         return np.random.normal(0, std, shape)
 
 
-class PositiveNormal(CenteredNormal):
+class PositiveXavier(Xavier):
     def new_matrix(self, shape):
         return np.abs(super().new_matrix(shape))
 
@@ -36,5 +42,6 @@ class PositiveNormal(CenteredNormal):
 if __name__ == '__main__':
     print(Zeros().new_matrix((2, 4)))
     print(CenteredNormal(1).new_matrix((2, 4)))
-    print(Xavier().new_matrix((2, 4)))
     print(PositiveNormal(2).new_matrix((2, 4)))
+    print(Xavier().new_matrix((2, 4)))
+    print(PositiveXavier().new_matrix((2, 4)))

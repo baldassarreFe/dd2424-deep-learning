@@ -4,8 +4,8 @@ import tarfile
 import urllib.request
 from collections import namedtuple
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from sklearn import preprocessing
 
 Batch = namedtuple('Batch', ['size', 'images', 'one_hot_labels', 'numeric_labels'])
@@ -39,7 +39,7 @@ class CIFAR10:
             with open('.gitignore', 'a+') as out:
                 out.write('cifar-10-batches-py\n')
 
-    def get_batch(self, batch_name):
+    def get_batch(self, batch_name) -> Batch:
         if batch_name not in self.loaded_batches:
             with open('cifar-10-batches-py/' + batch_name, 'rb') as f:
                 data = pickle.load(f, encoding='bytes')
@@ -52,16 +52,29 @@ class CIFAR10:
             )
         return self.loaded_batches[batch_name]
 
-    def get_batches(self, *args):
+    def get_batches(self, *args, limit=None) -> Batch:
         batches = [self.get_batch(name) for name in args]
-        return Batch(
+        big_batch = Batch(
             size=sum((b.size for b in batches)),
             images=np.hstack([b.images for b in batches]),
             one_hot_labels=np.hstack([b.one_hot_labels for b in batches]),
             numeric_labels=np.hstack([b.numeric_labels for b in batches])
         )
+        if limit is not None:
+            return self.subset(big_batch, limit)
+        else:
+            return big_batch
 
-    def describe_dataset(self, dataset, name='Dataset'):
+    @staticmethod
+    def subset(batch: Batch, size):
+        return Batch(
+            size=size,
+            images=batch.images[:, :size],
+            one_hot_labels=batch.one_hot_labels[:, :size],
+            numeric_labels=batch.numeric_labels[:size]
+        )
+
+    def describe_dataset(self, dataset: Batch, name: str = 'Dataset') -> str:
         res = '{} (total images {})\n'.format(name, dataset.size)
         for l in np.unique(dataset.numeric_labels):
             res += '- {:.2%}  {}\n'.format(
@@ -69,7 +82,7 @@ class CIFAR10:
                 self.labels[l])
         return res
 
-    def show_image(self, img, label=None, interpolation='gaussian'):
+    def show_image(self, img, label: int = None, interpolation='gaussian'):
         squared_image = np.rot90(np.reshape(img, (32, 32, 3), order='F'), k=3)
         plt.imshow(squared_image, interpolation=interpolation)
         plt.axis('off')
@@ -91,4 +104,3 @@ if __name__ == '__main__':
         cifar.show_image(training.images[:, img_i], training.numeric_labels[img_i])
 
     plt.show()
-

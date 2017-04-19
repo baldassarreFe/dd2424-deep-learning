@@ -1,27 +1,42 @@
+from abc import ABC, abstractmethod
+
 import numpy as np
 
 import initializers
+from initializers import Initializer
 
 np.seterr(over='raise')
 
 
-class Layer:
-    def forward(self, X):
-        return X
+class Layer(ABC):
+    def __init__(self, input_size, output_size, name):
+        # Layer parameters
+        self.input_size = input_size
+        self.output_size = output_size
+        self.name = name
 
+    @abstractmethod
+    def forward(self, X):
+        pass
+
+    @abstractmethod
     def backward(self, gradients):
-        return gradients
+        pass
 
     def cost(self):
         return 0
 
+    def __str__(self):
+        return '{} (in: {}, out: {})' \
+            .format(self.name, self.input_size, self.output_size)
 
 class Linear(Layer):
     def __init__(self, input_size, output_size, weight_regularization,
-                 weight_initializer=None, bias_initializer=None):
+                 weight_initializer: Initializer = None,
+                 bias_initializer: Initializer = None,
+                 name='Linear'):
         # Hyper parameters
-        self.input_size = input_size
-        self.output_size = output_size
+        super().__init__(input_size, output_size, name)
         self.weight_regularization = weight_regularization
 
         # Trainable weights
@@ -50,8 +65,8 @@ class Linear(Layer):
 
     def backward(self, gradients):
         # Size of the mini batch
+        assert self.X.shape[1] == gradients.shape[0]
         N = self.X.shape[1]
-        N = gradients.shape[0]
 
         # Reset gradients
         self.grad_W = np.zeros_like(self.W, dtype=float)
@@ -65,7 +80,7 @@ class Linear(Layer):
             self.grad_W += np.outer(g, x)
             self.grad_b += np.reshape(g, self.grad_b.shape)
 
-        self.grad_W /= N
+        self.grad_W = self.grad_W / N + 2 * self.weight_regularization * self.W
         self.grad_b /= N
 
         # Propagate back the gradients
@@ -76,10 +91,9 @@ class Linear(Layer):
 
 
 class ReLU(Layer):
-    def __init__(self, input_size):
+    def __init__(self, input_size, name='ReLU'):
         # Hyper parameters
-        self.input_size = input_size
-        self.output_size = input_size
+        super().__init__(input_size, input_size, name)
 
         # Dummy input for back propagation
         self.X = np.empty(shape=(self.input_size, 1))
@@ -94,14 +108,22 @@ class ReLU(Layer):
         return X * (X > 0)
 
     def backward(self, gradients):
+        # Size of the mini batch
+        assert self.X.shape[1] == gradients.shape[0]
+        N = self.X.shape[1]
+
+        # Compute gradients for every sample in the batch
+        input_gradient_pairs = ((self.X[:, i], gradients[i, :]) for i in range(N))
+        grads = (np.dot(g, np.diag(x > 0)) for (x, g) in input_gradient_pairs)
+
         # Propagate back the gradients
-        return np.dot(gradients, self.X > 0)
+        return np.vstack(grads)
 
 
 class Softmax(Layer):
-    def __init__(self, input_size):
+    def __init__(self, input_size, name='Softmax'):
         # Hyper parameters
-        self.input_size = input_size
+        super().__init__(input_size, input_size, name)
 
         # Dummy output probabilities for back propagation
         self.P = np.empty(shape=(self.input_size, 1))
@@ -185,10 +207,9 @@ class Softmax(Layer):
 
 
 class BatchNormalization(Layer):
-    def __init__(self, input_size, mu=None, Sigma=None):
+    def __init__(self, input_size, mu=None, Sigma=None, name='BatchNormalization'):
         # Hyper parameters
-        self.input_size = input_size
-        self.output_size = input_size
+        super().__init__(input_size, input_size, name)
 
         # Initial mu and Sigma
         self.mu = mu or np.zeros(shape=(input_size, 1), dtype=float)

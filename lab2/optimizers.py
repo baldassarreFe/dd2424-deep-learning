@@ -115,7 +115,7 @@ class MomentumSGD(VanillaSGD):
 if __name__ == '__main__':
     import initializers
     from utils import costs_accuracies_plot, show_plot
-    from cifar import CIFAR10
+    from datasets import CIFAR10
 
     cifar = CIFAR10()
     training = cifar.get_batches('data_batch_1')

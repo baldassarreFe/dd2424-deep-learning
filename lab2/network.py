@@ -1,14 +1,13 @@
 import numpy as np
 
-import initializers
-from layers import Softmax
+from layers import Softmax, Layer
 
 
 class Network:
     def __init__(self):
         self.layers = []
 
-    def add_layer(self, layer):
+    def add_layer(self, layer: Layer):
         self.layers.append(layer)
 
     def evaluate(self, inputs):
@@ -18,6 +17,12 @@ class Network:
         return outputs
 
     def backward(self, one_hot_targets, inputs=None):
+        """
+        :param one_hot_targets: the target to compare the
+                                output against
+        :param inputs: if None the network will use the
+                       output of the previous run
+        """
         if inputs is not None:
             self.evaluate(inputs)
 
@@ -48,19 +53,43 @@ class Network:
         true_labels = np.argmax(one_hot_targets, axis=0)
         return np.sum(predicted_labels == true_labels) / N
 
+
 if __name__ == '__main__':
     import layers
-    from cifar import CIFAR10
+    import datasets
+    import initializers
+    import matplotlib.pyplot as plt
 
-    cifar = CIFAR10()
-    training = cifar.get_batches('data_batch_1')
+    cifar = datasets.CIFAR10()
+    training = cifar.get_batches('data_batch_1', limit=4)
 
     net = Network()
-    net.add_layer(layers.Linear(cifar.input_size, 50, 0, initializers.PositiveNormal(0.01)))
+    net.add_layer(layers.Linear(cifar.input_size, 50, 0, initializers.Xavier()))
     net.add_layer(layers.ReLU(50))
     net.add_layer(layers.Linear(50, cifar.output_size, 0, initializers.Xavier()))
     net.add_layer(layers.Softmax(cifar.output_size))
 
-    Y = net.evaluate(training.images[:, :5])
-    print(net.accuracy(training.one_hot_labels[:, :5], None, Y))
-    print(net.cost(training.one_hot_labels[:, :5], None, Y))
+    Y = net.evaluate(training.images)
+    print('Cost:', net.cost(training.one_hot_labels, None, Y))
+    print('Accuracy: {:.2%}'
+          .format(net.accuracy(training.one_hot_labels, None, Y)))
+
+    plt.subplot(1, 3, 1)
+    plt.imshow(Y)
+    plt.yticks(range(10), cifar.labels)
+    plt.xlabel('Image number')
+    plt.title('Probabilities')
+
+    plt.subplot(1, 3, 2)
+    plt.imshow(cifar.label_encoder.transform(np.argmax(Y, axis=0)).T)
+    plt.yticks([])
+    plt.xlabel('Image number')
+    plt.title('Predicted classes')
+
+    plt.subplot(1, 3, 3)
+    plt.imshow(training.one_hot_labels)
+    plt.yticks([])
+    plt.xlabel('Image number')
+    plt.title('Ground truth')
+
+    plt.show()
