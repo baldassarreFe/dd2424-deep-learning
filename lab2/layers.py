@@ -207,8 +207,8 @@ class BatchNormalization(Layer):
         super().__init__(input_size, input_size, name)
 
         # Initial mu and Sigma
-        self.mu = mu or np.zeros(shape=(input_size, 1), dtype=float)
-        self.Sigma = Sigma or np.eye(input_size, dtype=float)
+        self.mu = mu if mu is not None else np.zeros(shape=(input_size, 1), dtype=float)
+        self.Sigma = Sigma if Sigma is not None else np.eye(input_size, dtype=float)
 
     def forward(self, X, train=False):
         if train:
@@ -217,7 +217,7 @@ class BatchNormalization(Layer):
         else:
             mu = self.mu
             Sigma = self.Sigma
-        return np.dot(Sigma, X - mu)
+        return np.dot(Sigma, (X.T - mu.T).T)
 
     def backward(self, gradients):
         # Not implemented yet

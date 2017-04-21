@@ -53,6 +53,11 @@ class Network:
         true_labels = np.argmax(one_hot_targets, axis=0)
         return np.sum(predicted_labels == true_labels) / N
 
+    def cost_accuracy(self, dataset):
+        Y = self.evaluate(dataset.images)
+        return (self.cost(dataset.one_hot_labels, None, Y),
+                self.accuracy(dataset.one_hot_labels, None, Y))
+
 
 if __name__ == '__main__':
     import layers
@@ -61,7 +66,7 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt
 
     cifar = datasets.CIFAR10()
-    training = cifar.get_batches('data_batch_1', limit=4)
+    training = cifar.get_named_batches('data_batch_1', limit=4)
 
     net = Network()
     net.add_layer(layers.Linear(cifar.input_size, 50, 0, initializers.Xavier()))
