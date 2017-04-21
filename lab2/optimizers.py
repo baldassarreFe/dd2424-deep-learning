@@ -171,9 +171,9 @@ if __name__ == '__main__':
 
     cifar = datasets.CIFAR10()
 
-    test_vanilla(cifar)
+    # test_vanilla(cifar)
     test_momentum(cifar)
-    test_overfitting(cifar, momentum=0.3)
-    test_overfitting(cifar, momentum=0.6)
-    test_overfitting(cifar, momentum=0.8)
-    test_overfitting(cifar, momentum=0.95)
+    # test_overfitting(cifar, momentum=0.3)
+    # test_overfitting(cifar, momentum=0.6)
+    # test_overfitting(cifar, momentum=0.8)
+    #test_overfitting(cifar, momentum=0.95)
