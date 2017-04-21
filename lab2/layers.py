@@ -30,6 +30,7 @@ class Layer(ABC):
         return '{} (in: {}, out: {})' \
             .format(self.name, self.input_size, self.output_size)
 
+
 class Linear(Layer):
     def __init__(self, input_size, output_size, weight_regularization,
                  weight_initializer: Initializer = None,
@@ -110,14 +111,8 @@ class ReLU(Layer):
     def backward(self, gradients):
         # Size of the mini batch
         assert self.X.shape[1] == gradients.shape[0]
-        N = self.X.shape[1]
 
-        # Compute gradients for every sample in the batch
-        input_gradient_pairs = ((self.X[:, i], gradients[i, :]) for i in range(N))
-        grads = (np.dot(g, np.diag(x > 0)) for (x, g) in input_gradient_pairs)
-
-        # Propagate back the gradients
-        return np.vstack(grads)
+        return np.multiply(gradients, self.X.T > 0)
 
 
 class Softmax(Layer):
