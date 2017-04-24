@@ -42,8 +42,8 @@ if __name__ == '__main__':
     import datasets
 
     cifar = datasets.CIFAR10()
-    training = cifar.subset(cifar.get_named_batches('data_batch_1'), 50)
-
+    training = cifar.get_named_batches('data_batch_1').subset(50)
+    
     # One layer network with regularization
     net = Network()
     linear = layers.Linear(cifar.input_size, cifar.output_size, 0.2, initializers.Xavier())

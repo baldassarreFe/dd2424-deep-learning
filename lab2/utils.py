@@ -49,7 +49,7 @@ def costs_accuracies_plot(epoch_nums, acc_train, acc_val, cost_train, cost_val, 
 
     plt.subplot(1, 2, 2)
     plt.plot(epoch_nums, acc_train, label='Train')
-    ax = plt.plot(epoch_nums, acc_val, label='Validation')
+    plt.plot(epoch_nums, acc_val, label='Validation')
     plt.title('Accuracy')
     plt.ylim(0, 1 if max(acc_train + acc_train) > .5 else 0.5)
     plt.gca().yaxis.set_major_formatter(FuncFormatter('{:.0%}'.format))
@@ -96,7 +96,8 @@ def create_and_train(training: Batch,
                      initial_learning_rate: float,
                      decay_factor: float,
                      momentum: float,
-                     train_id: str):
+                     train_id: str,
+                     test: Batch = None):
     """
     Create and train a 2 layer network:
     - subtract mean of the training set
@@ -139,19 +140,32 @@ def create_and_train(training: Batch,
                                  opt.cost_train, opt.cost_val,
                                  'images/{}.png'.format(train_id))
 
-    return {
+    result = {
         'epochs': epochs,
         'hidden_size': hidden_size,
         'regularization': regularization,
         'initial_learning_rate': initial_learning_rate,
         'decay_factor': decay_factor,
         'momentum': momentum,
-        'net': net,
-        'opt': opt,
+        # 'net': net,
+        # 'opt': opt,
         'epoch_nums': opt.epoch_nums,
         'cost_train': opt.cost_train,
         'acc_train': opt.acc_train,
         'cost_val': opt.cost_val,
         'acc_val': opt.acc_val,
+        'final_cost_train': opt.cost_train[-1],
+        'final_acc_train': opt.acc_train[-1],
+        'final_cost_val': opt.cost_val[-1],
+        'final_acc_val': opt.acc_val[-1],
         'plot': plot
     }
+
+    # Test set
+    if test is not None:
+        result['final_cost_test'], result['final_acc_test'] = net.cost_accuracy(test)
+        result['confusion_matrix'] = confusion_matrix_plot(net, test,
+                                                           CIFAR10().labels,
+                                                           'images/{}_conf.png'.format(train_id))
+
+    return result

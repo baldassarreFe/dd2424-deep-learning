@@ -15,7 +15,6 @@ class Optimizer(ABC):
         self.acc_val = []
         self.cost_train = []
         self.cost_val = []
-        pass
 
     @abstractmethod
     def train(self, training, validation, epochs, batch_size):
@@ -47,8 +46,7 @@ class VanillaSGD(Optimizer):
 
         for epoch_num in tqdm(range(epochs), desc='Epochs'):
             self.train_epoch(training, batch_size)
-            if epochs < 10 or epoch_num % (epochs // 10) == 0 or epoch_num == epochs - 1:
-                self.update_metrics(training, validation, epoch_num)
+            self.update_metrics(training, validation, epoch_num)
             self.learning_rate *= self.decay_factor
 
     def train_epoch(self, training, batch_size):
@@ -171,9 +169,9 @@ if __name__ == '__main__':
 
     cifar = datasets.CIFAR10()
 
-    # test_vanilla(cifar)
+    test_vanilla(cifar)
     test_momentum(cifar)
-    # test_overfitting(cifar, momentum=0.3)
-    # test_overfitting(cifar, momentum=0.6)
-    # test_overfitting(cifar, momentum=0.8)
-    #test_overfitting(cifar, momentum=0.95)
+    test_overfitting(cifar, momentum=0.3)
+    test_overfitting(cifar, momentum=0.6)
+    test_overfitting(cifar, momentum=0.8)
+    test_overfitting(cifar, momentum=0.95)

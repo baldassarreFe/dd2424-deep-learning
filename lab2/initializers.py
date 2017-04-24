@@ -29,9 +29,9 @@ class PositiveNormal(CenteredNormal):
 
 class Xavier(Initializer):
     def new_matrix(self, shape):
-        # standard dev = 1 / sqrt (layer output size)
-        std = 1 / np.sqrt(shape[0])
-        return np.random.normal(0, std, shape)
+        # standard dev = sqrt (1/(input size + output size))
+        var = 2 / (shape[0] + shape[1])
+        return np.random.normal(0, np.sqrt(var), shape)
 
 
 class PositiveXavier(Xavier):
