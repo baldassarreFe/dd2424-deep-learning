@@ -10,6 +10,14 @@ from sklearn import preprocessing
 
 class Batch:
     def __init__(self, images, one_hot_labels, numeric_labels, class_names):
+
+        """
+        Constructor for a batch of images
+        :param images: each image is represented by a column of the input
+        :param one_hot_labels:
+        :param numeric_labels:
+        :param class_names:
+        """
         self.size = images.shape[1]
         self.images = images
         self.one_hot_labels = one_hot_labels

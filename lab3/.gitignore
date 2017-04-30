@@ -2,3 +2,4 @@
 .ipynb_checkpoints
 env
 cifar-10-batches-py
+images

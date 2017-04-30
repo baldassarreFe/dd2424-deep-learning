@@ -1,6 +1,6 @@
 import numpy as np
 
-from layers import Softmax, Layer
+from layers import Softmax, Layer, BatchNormalization
 
 
 class Network:
@@ -10,10 +10,13 @@ class Network:
     def add_layer(self, layer: Layer):
         self.layers.append(layer)
 
-    def evaluate(self, inputs):
+    def evaluate(self, inputs, train=False):
         outputs = inputs
         for layer in self.layers:
-            outputs = layer.forward(outputs)
+            if type(layer) is BatchNormalization:
+                outputs = layer.forward(outputs, train)
+            else:
+                outputs = layer.forward(outputs)
         return outputs
 
     def backward(self, one_hot_targets, inputs=None):

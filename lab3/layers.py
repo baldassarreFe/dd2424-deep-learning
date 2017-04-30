@@ -17,10 +17,26 @@ class Layer(ABC):
 
     @abstractmethod
     def forward(self, X):
+        """
+        Propagates forward the activations in the network.
+        :param X: a (input size x N ) matrix containing the N inputs
+                  for this layer (each column corresponds to a sample)
+        :return: a (output size x N ) matrix containing the N outputs
+                 of this layer (each column corresponds to a sample)
+        """
         pass
 
     @abstractmethod
     def backward(self, gradients):
+        """
+        Propagates back the gradients received from the following layer
+        in the network.
+        :param gradients: a (N x output size) matrix containing the N
+                          gradients from the following layer in the network,
+                          one gradient per row
+        :return: a (N x input size) matrix containing the N gradients propagated
+                 back from this layer, one gradient per row
+        """
         pass
 
     def cost(self):
@@ -57,6 +73,7 @@ class Linear(Layer):
 
     def forward(self, X):
         # Store input for back propagation
+        assert X.shape[0] == self.input_size
         self.X = X
 
         # Compute output: every column of the output is the
@@ -101,6 +118,7 @@ class ReLU(Layer):
 
     def forward(self, X):
         # Store input for back propagation
+        assert X.shape[0] == self.input_size
         self.X = X
 
         # Compute output: every column in the output is the element wise
@@ -124,6 +142,7 @@ class Softmax(Layer):
         self.P = np.empty(shape=(self.input_size, 1))
 
     def forward(self, X):
+        assert X.shape[0] == self.input_size
         # Compute output: every column of the output is the
         # softmax of the corresponding column in the input
         try:
@@ -143,7 +162,7 @@ class Softmax(Layer):
 
     def backward(self, one_hot_targets):
         # Size of the mini batch
-        N = self.P.shape[1]
+        assert self.P.shape[1] == one_hot_targets.shape[1]
         N = one_hot_targets.shape[1]
 
         output_target_pairs = ((one_hot_targets[:, i], self.P[:, i]) for i in range(N))
@@ -156,7 +175,7 @@ class Softmax(Layer):
         # Size of the mini batch
         if P is None:
             P = self.P
-        N = P.shape[1]
+        assert P.shape[1] == one_hot_targets.shape[1]
         N = one_hot_targets.shape[1]
 
         # This is element wise multiplication
@@ -202,23 +221,108 @@ class Softmax(Layer):
 
 
 class BatchNormalization(Layer):
-    def __init__(self, input_size, mu=None, Sigma=None, name='BatchNormalization'):
+    def __init__(self, input_size, mu=None, Sigma=None, alpha=0.99, name='BatchNormalization'):
+        """
+        A batch normalization layer
+        :param input_size:
+        :param mu: the initial mu to use (dimension input_size x 1),
+                   if None it will be the mean of the first batch
+        :param Sigma: the initial Sigma to use (dimension input_size x 1),
+                      if None it will be the variance of the first batch
+        :param alpha: a factor for the exp moving average
+        :param name: a name for this layer
+        """
         # Hyper parameters
         super().__init__(input_size, input_size, name)
+        self.alpha = alpha
 
         # Initial mu and Sigma
-        self.mu = mu if mu is not None else np.zeros(shape=(input_size, 1), dtype=float)
-        self.Sigma = Sigma if Sigma is not None else np.eye(input_size, dtype=float)
+        assert mu is None or mu.shape == (input_size, 1)
+        assert Sigma is None or Sigma.shape == (input_size, 1)
+        self.mu = mu
+        self.Sigma = Sigma
+
+        # Dummy input for back propagation
+        self.X = np.empty(shape=(self.input_size, 1))
 
     def forward(self, X, train=False):
-        if train:
-            mu = X.mean(axis=1)
-            Sigma = X.var(axis=1)
+        """
+        Computes this operation for each x in the batch
+        (i.e. for every column of the input matrix X)
+
+            out = diag(var)^(-1/2) (x - mu)
+
+        This is actually equivalent to this operation,
+        where the multiplication and the power are element-wise:
+
+            out = var^(-1/2) .* (x - mu)
+
+        :param X: the data batch, one sample per column
+        :param train:
+            - False to use the internal mean and variance
+            - True to use the mean and variance of the input and update
+                the internal mean and variance using:
+                mu_avg <- alpha * mu_avg + (1-alpha) * mu_batch
+                Sigma_avg <- alpha * Sigma_avg + (1-alpha) * Sigma_batch
+        :return:
+        """
+        # Store input for back propagation
+        assert X.shape[0] == self.input_size
+        self.X = X
+
+        if train or self.mu is None or self.Sigma is None:
+            self.__update_mu_and_var(X)
+        self.Sigma[self.Sigma == 0] = np.finfo(float).eps
+        return self.Sigma ** -0.5 * (X - self.mu)
+
+    def __update_mu_and_var(self, X):
+        # Update mean
+        batch_mu = X.mean(axis=1, keepdims=True)
+        if self.mu is None:
+            self.mu = batch_mu
         else:
-            mu = self.mu
-            Sigma = self.Sigma
-        return np.dot(Sigma, (X.T - mu.T).T)
+            self.mu = self.alpha * self.mu + (1 - self.alpha) * batch_mu
+
+        # Update variance (Numpy's variance uses N at the denominator
+        # and not N-1, so for us it's already ok)
+        batch_Sigma = X.var(axis=1, keepdims=True)
+        if self.Sigma is None:
+            self.Sigma = batch_Sigma
+        else:
+            self.Sigma = self.alpha * self.Sigma + (1 - self.alpha) * batch_Sigma
 
     def backward(self, gradients):
-        # Not implemented yet
-        return gradients
+        # Size of the mini batch
+        assert self.X.shape[1] == gradients.shape[0]
+        N = self.X.shape[1]
+
+        # Prepare intermediary results
+        gradients = gradients.T
+        Sigma_inv = self.Sigma ** -0.5
+        centered_X = (self.X - self.mu)
+
+        dJ_dv = - 0.5 * (gradients * (self.Sigma ** -1.5 * centered_X)) \
+            .sum(axis=1, keepdims=True)
+        dJ_dmu = - (gradients * Sigma_inv).sum(axis=1, keepdims=True)
+
+        # Gradient computations
+        gradients = gradients * Sigma_inv + \
+                    2 / N * dJ_dv * centered_X + \
+                    1 / N * dJ_dmu
+
+        return gradients.T
+
+
+if __name__ == '__main__':
+    import datasets
+
+    cifar = datasets.CIFAR10()
+    training = cifar.get_named_batches('data_batch_1').subset(15)
+
+    bn = BatchNormalization(input_size=cifar.input_size)
+    out = bn.forward(training.images, train=True)
+
+    print(out.mean(axis=1))
+    print(out.var(axis=1))
+
+    print(bn.backward(training.images.T).shape)

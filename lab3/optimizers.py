@@ -63,7 +63,7 @@ class VanillaSGD(Optimizer):
         inputs = training.images[:, indexes]
         one_hot_targets = training.one_hot_labels[:, indexes]
 
-        self.network.evaluate(inputs)
+        self.network.evaluate(inputs, train=True)
         self.network.backward(one_hot_targets)
 
     def execute_update(self):
@@ -166,12 +166,82 @@ if __name__ == '__main__':
                               'images/overfit_mom{}.png'.format(momentum))
         show_plot('images/overfit_mom{}.png'.format(momentum))
 
+    def test_batch_norm(cifar, learning_rate):
+        training = cifar.get_named_batches('data_batch_1').subset(1000)
+
+        net = Network()
+        net.add_layer(layers.Linear(cifar.input_size, 50, 0, initializers.Xavier()))
+        net.add_layer(layers.BatchNormalization(50))
+        net.add_layer(layers.ReLU(50))
+        net.add_layer(layers.Linear(50, cifar.output_size, 0, initializers.Xavier()))
+        net.add_layer(layers.Softmax(cifar.output_size))
+
+        opt = MomentumSGD(net, initial_learning_rate=learning_rate, momentum=0.0)
+
+        opt.train(training, training, 400)
+
+        costs_accuracies_plot(opt.epoch_nums, opt.acc_train, opt.acc_val, opt.cost_train, opt.cost_val,
+                              'images/overfit_bn{}.png'.format(learning_rate))
+        #show_plot('images/overfit_bn{}.png'.format(learning_rate))
+
+    def test_three_layers_no_batch(cifar):
+        training = cifar.get_named_batches('data_batch_1')
+        validation = cifar.get_named_batches('data_batch_5').subset(1000)
+
+        net = Network()
+        net.add_layer(layers.Linear(cifar.input_size, 50, 0, initializers.Xavier()))
+        net.add_layer(layers.ReLU(50))
+        net.add_layer(layers.Linear(50, 30, 0, initializers.Xavier()))
+        net.add_layer(layers.ReLU(30))
+        net.add_layer(layers.Linear(30, cifar.output_size, 0, initializers.Xavier()))
+        net.add_layer(layers.Softmax(cifar.output_size))
+
+        opt = MomentumSGD(net, initial_learning_rate=0.05, decay_factor=0.998, momentum=0.8)
+
+        opt.train(training, validation, epochs=15, batch_size=250)
+
+        costs_accuracies_plot(opt.epoch_nums, opt.acc_train, opt.acc_val, opt.cost_train, opt.cost_val,
+                              'images/three_layer_no_batch.png')
+        # show_plot('images/three_layer_no_batch.png')
+
+    def test_three_layers_batch(cifar, initial_learning_rate):
+        training = cifar.get_named_batches('data_batch_1').subset(5000)
+        validation = cifar.get_named_batches('data_batch_5').subset(1000)
+
+        net = Network()
+        net.add_layer(layers.Linear(cifar.input_size, 50, 0, initializers.Xavier()))
+        net.add_layer(layers.BatchNormalization(50))
+        net.add_layer(layers.ReLU(50))
+        net.add_layer(layers.Linear(50, 30, 0, initializers.Xavier()))
+        #net.add_layer(layers.BatchNormalization(30))
+        net.add_layer(layers.ReLU(30))
+        net.add_layer(layers.Linear(30, cifar.output_size, 0, initializers.Xavier()))
+        net.add_layer(layers.Softmax(cifar.output_size))
+
+        opt = MomentumSGD(net, initial_learning_rate=initial_learning_rate,
+                          decay_factor=0.998, momentum=0.8)
+        #opt = VanillaSGD(net, initial_learning_rate, decay_factor=0.998)
+
+        opt.train(training, validation, epochs=50, batch_size=25)
+
+        costs_accuracies_plot(opt.epoch_nums, opt.acc_train, opt.acc_val, opt.cost_train, opt.cost_val,
+                              'images/three_layer_batch{}.png'.format(initial_learning_rate))
+        # show_plot('images/three_layer_batch.png')
+
 
     cifar = datasets.CIFAR10()
 
+    """
     test_vanilla(cifar)
     test_momentum(cifar)
-    test_overfitting(cifar, momentum=0.3)
-    test_overfitting(cifar, momentum=0.6)
-    test_overfitting(cifar, momentum=0.8)
-    test_overfitting(cifar, momentum=0.95)
+
+    for momentum in [.3, .6, .8, .95]:
+        test_overfitting(cifar, momentum)
+
+    for learning_rate in [0.5, 0.05, 0.005, 0.0005]:
+        test_batch_norm(cifar, learning_rate)
+    """
+    # test_three_layers_no_batch(cifar)
+    for learning_rate in [0.001, 0.005, 0.01]:
+        test_three_layers_batch(cifar, learning_rate)
+
