@@ -1,17 +1,16 @@
-import numpy as np
 from tqdm import tqdm
 
-import datasets
-import initializers
-import layers
+from datasets import CIFAR10
+from initializers import *
+from layers import *
 from network import Network
 
 
 def compute_grads_for_matrix(one_hot_targets, inputs,
                              matrix, network: Network):
     # Initialize an empty matrix to contain the gradients
-    grad = np.zeros_like(matrix)
-    h = 1e-6
+    grad = np.empty_like(matrix)
+    h = 1e-5
 
     # Iterate over the matrix changing one entry at the time
     desc = 'Gradient computations for a {} matrix, {} samples' \
@@ -32,9 +31,10 @@ def compute_grads_for_matrix(one_hot_targets, inputs,
 def print_grad_diff(grad, grad_num, title='Gradient difference'):
     err = np.abs(grad - grad_num)
     rel_err = err / np.maximum(np.finfo('float').eps, np.abs(grad) + np.abs(grad_num))
-    coord_worst = np.unravel_index(np.argmax(rel_err), rel_err.shape)
     print('\n{}: {:.2e}\n'.format(title, np.max(rel_err)))
-    if np.max(rel_err) > 1e-4:
+
+    coord_worst = np.unravel_index(np.argmax(rel_err), rel_err.shape)
+    if rel_err[coord_worst] > 1e-4:
         print('grad {:.3e}'.format(grad[coord_worst]))
         print('num {:.3e}'.format(grad_num[coord_worst]))
         print('diff {:.3e}'.format(err[coord_worst]))
@@ -45,12 +45,14 @@ def one_layer_no_reg():
     One layer network without regularization
     """
     net = Network()
-    linear = layers.Linear(cifar.input_size, cifar.output_size, 0, initializers.Xavier())
+    linear = Linear(CIFAR10.input_size, CIFAR10.output_size, 0, Xavier())
     net.add_layer(linear)
-    net.add_layer(layers.Softmax(cifar.output_size))
-    outputs = net.evaluate(training.images)
+    net.add_layer(Softmax(CIFAR10.output_size))
+
+    # Run one forward and backward pass
+    net.evaluate(training.images, train=True)
     net.backward(training.one_hot_labels)
-    cost = net.cost(training.one_hot_labels, outputs=outputs)
+
     # Weights matrix
     grad_num = compute_grads_for_matrix(training.one_hot_labels,
                                         training.images,
@@ -68,12 +70,14 @@ def one_layer_with_reg():
     One layer network with regularization
     """
     net = Network()
-    linear = layers.Linear(cifar.input_size, cifar.output_size, 0.2, initializers.Xavier())
+    linear = Linear(CIFAR10.input_size, CIFAR10.output_size, 0.2, Xavier())
     net.add_layer(linear)
-    net.add_layer(layers.Softmax(cifar.output_size))
-    outputs = net.evaluate(training.images)
+    net.add_layer(Softmax(CIFAR10.output_size))
+
+    # Run one forward and backward pass
+    net.evaluate(training.images, train=True)
     net.backward(training.one_hot_labels)
-    cost = net.cost(training.one_hot_labels, outputs=outputs)
+
     # Weights matrix
     grad_num = compute_grads_for_matrix(training.one_hot_labels,
                                         training.images,
@@ -86,18 +90,47 @@ def one_layer_with_reg():
     print_grad_diff(linear.grad_b, grad_num, '1L reg b1')
 
 
+def one_layer_with_bn():
+    """
+    One layer network with batch normalization
+    """
+    net = Network()
+    linear = Linear(CIFAR10.input_size, CIFAR10.output_size, 0, Xavier())
+    net.add_layer(linear)
+    net.add_layer(BatchNormalization(CIFAR10.output_size))
+    net.add_layer(Softmax(CIFAR10.output_size))
+
+    # Run one forward and backward pass
+    net.evaluate(training.images, train=True)
+    net.backward(training.one_hot_labels)
+
+    # Weights matrix
+    grad_num = compute_grads_for_matrix(training.one_hot_labels,
+                                        training.images,
+                                        linear.W, net)
+    print_grad_diff(linear.grad_W, grad_num, '1L bn W1')
+
+    # Biases matrix
+    grad_num = compute_grads_for_matrix(training.one_hot_labels,
+                                        training.images,
+                                        linear.b, net)
+    print_grad_diff(linear.grad_b, grad_num, '1L bn b1')
+
+
 def two_layer_with_reg():
     # Two layer network with regularization
     net = Network()
-    linear1 = layers.Linear(cifar.input_size, 15, 0.1, initializers.Xavier(), name='Linear 1')
+    linear1 = Linear(CIFAR10.input_size, 15, 0.1, Xavier(), name='Linear 1')
     net.add_layer(linear1)
-    net.add_layer(layers.ReLU(15))
-    linear2 = layers.Linear(15, cifar.output_size, 0.3, initializers.Xavier(), name='Linear 2')
+    net.add_layer(ReLU(15))
+    linear2 = Linear(15, CIFAR10.output_size, 0.3, Xavier(), name='Linear 2')
     net.add_layer(linear2)
-    net.add_layer(layers.Softmax(cifar.output_size))
-    outputs = net.evaluate(training.images)
+    net.add_layer(Softmax(CIFAR10.output_size))
+
+    # Run one forward and backward pass
+    net.evaluate(training.images, train=True)
     net.backward(training.one_hot_labels)
-    cost = net.cost(training.one_hot_labels, outputs=outputs)
+
     # Weights matrix, layer 1
     grad_num = compute_grads_for_matrix(training.one_hot_labels,
                                         training.images,
@@ -123,17 +156,17 @@ def two_layer_with_reg():
 def two_layer_with_bn():
     # Two layer network without regularization and with batch normalization
     net = Network()
-    linear1 = layers.Linear(cifar.input_size, 15, 0.1, initializers.Xavier(), name='Linear 1')
+    linear1 = Linear(CIFAR10.input_size, 15, 0, CenteredNormal(0.001), name='Linear 1')
     net.add_layer(linear1)
-    net.add_layer(layers.BatchNormalization(15))
-    net.add_layer(layers.ReLU(15))
-    linear2 = layers.Linear(15, cifar.output_size, 0.3, initializers.Xavier(), name='Linear 2')
+    net.add_layer(BatchNormalization(15))
+    net.add_layer(ReLU(15))
+    linear2 = Linear(15, CIFAR10.output_size, 0, CenteredNormal(0.1), name='Linear 2')
     net.add_layer(linear2)
-    net.add_layer(layers.Softmax(cifar.output_size))
+    net.add_layer(Softmax(CIFAR10.output_size))
 
-    outputs = net.evaluate(training.images)
+    # Run one forward and backward pass
+    net.evaluate(training.images, train=True)
     net.backward(training.one_hot_labels)
-    cost = net.cost(training.one_hot_labels, outputs=outputs)
 
     # Weights matrix, layer 1
     grad_num = compute_grads_for_matrix(training.one_hot_labels,
@@ -163,21 +196,21 @@ def two_layer_with_bn():
 def three_layer_with_bn():
     # Three layer network without regularization and with batch normalization
     net = Network()
-    linear1 = layers.Linear(cifar.input_size, 25, 0.1, initializers.Xavier(), name='Linear 1')
+    linear1 = Linear(CIFAR10.input_size, 25, 0, Xavier(), name='Linear 1')
     net.add_layer(linear1)
-    net.add_layer(layers.BatchNormalization(25))
-    net.add_layer(layers.ReLU(25))
-    linear2 = layers.Linear(25, 15, 0.1, initializers.Xavier(), name='Linear 2')
+    net.add_layer(BatchNormalization(25))
+    net.add_layer(ReLU(25))
+    linear2 = Linear(25, 15, 0, Xavier(), name='Linear 2')
     net.add_layer(linear2)
-    net.add_layer(layers.BatchNormalization(15))
-    net.add_layer(layers.ReLU(15))
-    linear3 = layers.Linear(15, cifar.output_size, 0.3, initializers.Xavier(), name='Linear 3')
+    net.add_layer(BatchNormalization(15))
+    net.add_layer(ReLU(15))
+    linear3 = Linear(15, CIFAR10.output_size, 0, Xavier(), name='Linear 3')
     net.add_layer(linear3)
-    net.add_layer(layers.Softmax(cifar.output_size))
+    net.add_layer(Softmax(CIFAR10.output_size))
 
-    outputs = net.evaluate(training.images)
+    # Run one forward and backward pass
+    net.evaluate(training.images, train=True)
     net.backward(training.one_hot_labels)
-    cost = net.cost(training.one_hot_labels, outputs=outputs)
 
     # Weights matrix, layer 1
     grad_num = compute_grads_for_matrix(training.one_hot_labels,
@@ -219,25 +252,25 @@ def three_layer_with_bn():
 def four_layer_with_bn():
     # Four layer network without regularization and with batch normalization
     net = Network()
-    linear1 = layers.Linear(cifar.input_size, 30, 0.1, initializers.Xavier(), name='Linear 1')
+    linear1 = Linear(CIFAR10.input_size, 30, 0, Xavier(), name='Linear 1')
     net.add_layer(linear1)
-    net.add_layer(layers.BatchNormalization(30))
-    net.add_layer(layers.ReLU(30))
-    linear2 = layers.Linear(30, 20, 0.1, initializers.Xavier(), name='Linear 2')
+    net.add_layer(BatchNormalization(30))
+    net.add_layer(ReLU(30))
+    linear2 = Linear(30, 20, 0.1, Xavier(), name='Linear 2')
     net.add_layer(linear2)
-    net.add_layer(layers.BatchNormalization(20))
-    net.add_layer(layers.ReLU(20))
-    linear3 = layers.Linear(20, 15, 0.1, initializers.Xavier(), name='Linear 3')
+    net.add_layer(BatchNormalization(20))
+    net.add_layer(ReLU(20))
+    linear3 = Linear(20, 15, 0, Xavier(), name='Linear 3')
     net.add_layer(linear3)
-    net.add_layer(layers.BatchNormalization(15))
-    net.add_layer(layers.ReLU(15))
-    linear4 = layers.Linear(15, cifar.output_size, 0.3, initializers.Xavier(), name='Linear 4')
+    net.add_layer(BatchNormalization(15))
+    net.add_layer(ReLU(15))
+    linear4 = Linear(15, CIFAR10.output_size, 0, Xavier(), name='Linear 4')
     net.add_layer(linear4)
-    net.add_layer(layers.Softmax(cifar.output_size))
+    net.add_layer(Softmax(CIFAR10.output_size))
 
-    outputs = net.evaluate(training.images)
+    # Run one forward and backward pass
+    net.evaluate(training.images, train=True)
     net.backward(training.one_hot_labels)
-    cost = net.cost(training.one_hot_labels, outputs=outputs)
 
     # Weights matrix, layer 1
     grad_num = compute_grads_for_matrix(training.one_hot_labels,
@@ -288,16 +321,90 @@ def four_layer_with_bn():
     print_grad_diff(linear4.grad_b, grad_num, '4L bn b4')
 
 
+def batch_norm_grad_slow(bnl: BatchNormalization, gradients):
+    mu = bnl.batch_mean.ravel()
+    v = bnl.batch_var.ravel()
+    v[v == 0] = np.finfo(float).eps
+    V_m1_2 = np.diag(v ** -0.5)
+    V_m3_2 = np.diag(v ** -1.5)
+
+    D, N = bnl.X.shape
+
+    dJdv = np.zeros(D)
+    for i in range(N):
+        x = bnl.X[:, i]
+        g = gradients[i, :]
+        d = np.diag(x - mu)
+        t1 = np.dot(g, V_m3_2)
+        t2 = np.dot(t1, d)
+        dJdv += t2
+    dJdv /= -2
+
+    dJdmu = np.zeros(D)
+    for i in range(N):
+        g = gradients[i, :]
+        t = np.dot(g, V_m1_2)
+        dJdmu += t
+    dJdmu *= -1
+
+    grr = np.empty((N, D))
+    for i in range(N):
+        x = bnl.X[:, i]
+        g = gradients[i, :]
+        d = np.diag(x - mu)
+
+        z1 = np.dot(g, V_m1_2)
+        z2 = (2 / N) * np.dot(dJdv, d)
+        z3 = (1 / N) * dJdmu
+
+        grr[i, :] = z1 + z2 + z3
+
+    return grr
+
+
+def test_bn():
+    # 2 dimensional input, 4 samples
+    X = np.array([
+        [1, 7, 3, 5],
+        [0, 12, 4, 8],
+    ])
+    bn = BatchNormalization(input_size=X.shape[0])
+    res = bn.forward(X, train=True)
+
+    assert np.allclose(res.mean(axis=1, keepdims=True), 0)
+    assert np.allclose(res.var(axis=1, keepdims=True), 1)
+
+    # Each row is relative to the corresponding
+    # column in X
+    gradients = np.array([
+        [0, 1],
+        [3, 4],
+        [6, 7],
+        [9, 2],
+    ])
+
+    grr = batch_norm_grad_slow(bn, gradients)
+    backprop = bn.backward(gradients)
+
+    assert np.allclose(backprop, grr), \
+        'Different\n' + str(grr) + '\n' + str(backprop)
+    print('Passed')
+
 if __name__ == '__main__':
-    cifar = datasets.CIFAR10()
+    cifar = CIFAR10()
     training = cifar.get_named_batches('data_batch_1').subset(20)
 
-    one_layer_no_reg()
-    one_layer_with_reg()
+    np.random.seed(123)
 
-    two_layer_with_reg()
+    # one_layer_no_reg()
+    # one_layer_with_bn()
+    # one_layer_with_reg()
+
+    # two_layer_with_reg()
     two_layer_with_bn()
 
-    three_layer_with_bn()
+    # three_layer_with_bn()
 
-    four_layer_with_bn()
+    # four_layer_with_bn()
+
+    test_bn()

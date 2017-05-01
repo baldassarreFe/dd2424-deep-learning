@@ -37,6 +37,13 @@ def confusion_matrix_plot(net: Network, dataset: Batch, labels, destfile):
     return destfile
 
 
+def costs_accuracies_plot_with_opt(opt, destfile):
+    costs_accuracies_plot(opt.epoch_nums,
+                          opt.acc_train, opt.acc_val,
+                          opt.cost_train, opt.cost_val,
+                          destfile)
+
+
 def costs_accuracies_plot(epoch_nums, acc_train, acc_val, cost_train, cost_val, destfile):
     plt.subplot(1, 2, 1)
     plt.plot(epoch_nums, cost_train, 'r-', label='Train')
