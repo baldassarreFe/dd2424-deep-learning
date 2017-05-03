@@ -43,7 +43,7 @@ class Layer(ABC):
         return 0
 
     def __str__(self):
-        return '{} (in: {}, out: {})' \
+        return '{} ({}, {})' \
             .format(self.name, self.input_size, self.output_size)
 
 

@@ -1,0 +1,7 @@
+,batch_norm,confusion_matrix,decay_factor,epochs,final_acc_test,final_acc_train,final_acc_val,final_cost_test,final_cost_train,final_cost_val,hidden_layers,initial_learning_rate,momentum,plot,regularization
+0,False,,0.99,15,0,0.1032,0.094,0,9.017087511991067,9.017914098275213,[50],0.40573,0.8,images/fast_0.png,0.0001
+0,False,,0.99,15,0,0.3914,0.361,0,1.7146730971129966,1.8462074224123548,[50],0.029202,0.8,images/fast_1.png,0.0001
+0,False,,0.99,15,0,0.3684,0.368,0,1.8342855040345465,1.9034090346768102,[50],0.003215,0.8,images/fast_2.png,0.0001
+0,True,,0.99,15,0,0.4433,0.33,0,1.7927278903602608,2.517997702608945,[50],0.40573,0.8,images/fast_3.png,0.0001
+0,True,,0.99,15,0,0.4878,0.364,0,1.4539627037908902,1.8521202529108607,[50],0.029202,0.8,images/fast_4.png,0.0001
+0,True,,0.99,15,0,0.4224,0.369,0,1.6817163543467901,1.8241052792791264,[50],0.003215,0.8,images/fast_5.png,0.0001

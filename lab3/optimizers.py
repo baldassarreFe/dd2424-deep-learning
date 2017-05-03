@@ -46,7 +46,7 @@ class VanillaSGD(Optimizer):
     def train(self, training, validation, epochs=1, batch_size=None):
         batch_size = batch_size or training.size
 
-        for epoch_num in tqdm(range(epochs), desc='Epochs'):
+        for epoch_num in tqdm(range(1, epochs + 1), desc='Epochs'):
             self.train_epoch(training, batch_size)
             self.update_metrics(training, validation, epoch_num)
             self.learning_rate *= self.decay_factor

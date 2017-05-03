@@ -1,6 +1,6 @@
 import numpy as np
 
-from layers import Softmax, Layer, BatchNormalization
+from layers import Linear, Softmax, Layer, BatchNormalization
 
 
 class Network:
@@ -62,3 +62,7 @@ class Network:
         Y = self.evaluate(dataset.images, train=False)
         return (self.cost(dataset.one_hot_labels, None, Y),
                 self.accuracy(dataset.one_hot_labels, None, Y))
+
+    def __str__(self):
+        size = len(list(filter(lambda l: type(l) is Linear, self.layers)))
+        return 'Net [' + str(size) + ']: ' + ', '.join(map(str, self.layers))

@@ -396,15 +396,15 @@ if __name__ == '__main__':
 
     np.random.seed(123)
 
-    # one_layer_no_reg()
-    # one_layer_with_bn()
-    # one_layer_with_reg()
+    one_layer_no_reg()
+    one_layer_with_bn()
+    one_layer_with_reg()
 
-    # two_layer_with_reg()
+    two_layer_with_reg()
     two_layer_with_bn()
 
-    # three_layer_with_bn()
+    three_layer_with_bn()
 
-    # four_layer_with_bn()
+    four_layer_with_bn()
 
     test_bn()
