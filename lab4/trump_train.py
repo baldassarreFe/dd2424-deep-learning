@@ -24,7 +24,7 @@ def load_all_tweets():
     """
     :return: a list of all tweets, each one formatted as in `sanitize_and_pad`
     """
-    json_path = 'sources/json_trump'
+    json_path = 'sources/trump'
     json_files = [join(json_path, f) for f in listdir(json_path)
                   if isfile(join(json_path, f)) and f.endswith('.json')]
     all_tweets = []
@@ -39,24 +39,26 @@ def sanitize_and_pad(tweet_text):
     """
     Processes a tweet so that it contains only ascii characters, removes all
     internal newlines, changes the web-encoded '&' '>' '<' to their ascii char,
-    pads to 140 characters adding spaces if needed and closes the tweet
-    with a 141st '\n' character
+    pads to 140 characters adding spaces if needed and adds '\0' as starting
+    character (a <start of tweet> marker)
     :param tweet_text:
     :return:
     """
-    return re.sub(r'[^\x00-\x7F]+', ' ', tweet_text) \
-               .replace('&amp;', '&') \
-               .replace('&lt;', '<') \
-               .replace('&ge;', '>') \
-               .replace('\n', '') \
-               .replace('\r', '') \
-               .ljust(140) + '\n'
+    return '\0' + re.sub(r'[^\x00-\x7F]+', ' ', tweet_text) \
+        .replace('&amp;', '&') \
+        .replace('&lt;', '<') \
+        .replace('&ge;', '>') \
+        .replace('\n', '') \
+        .replace('\r', '') \
+        .ljust(140)
 
 
 def encode_tweets(tweet_list):
     char_sequence = list(''.join(tweet_list))
     label_encoder = preprocessing.LabelBinarizer()
     label_encoder.fit(list(set(char_sequence)))
+    np.savez_compressed('sources/trump/tweet_chars',
+                        labels=label_encoder.classes_)
     encoded_tweets = label_encoder.transform(char_sequence)
     return encoded_tweets, label_encoder
 
@@ -82,11 +84,10 @@ def setup_plot():
 
 
 def report_callback(e, i, start, tweet_per_epoch, opt, label_encoder):
-    first_char = np.zeros(opt.rnn.input_size)
-    first_char[np.random.randint(0, opt.rnn.input_size)] = 1
+    first_char = np.squeeze(label_encoder.transform(['\0']))
     initial_state = np.zeros(opt.rnn.state_size)
     seq, _ = opt.rnn.generate(first_char, initial_state, tweet_length)
-    gen = ''.join(label_encoder.inverse_transform(seq))
+    gen = ''.join(label_encoder.inverse_transform(seq)).strip()
     print('Completed epochs {} tweets {}/{} '
           'cost {:.2f} elapsed {:.0f}s:\n{}\n'
           .format(e, i, tweet_per_epoch, opt.smooth_costs[-1],
@@ -119,14 +120,17 @@ def main():
 
     setup_plot()
     tweets_as_epochs = list(tweet_subsequences(encoded_tweets))
+    total_tweets = len(tweets_as_epochs)
     report = functools.partial(report_callback, start=time.time(), opt=opt,
-                               tweet_per_epoch=len(tweets_as_epochs),
+                               tweet_per_epoch=total_tweets,
                                label_encoder=label_encoder)
     for e in range(10):
-        for i, tweet_as_seq in enumerate(tweets_as_epochs):
+        indexes = np.arange(total_tweets)
+        np.random.shuffle(indexes)
+        for i, idx in enumerate(indexes):
             if i > 0 and i % 2000 == 0:
                 report(e, i)
-            opt.train(tweet_as_seq)
+            opt.train(tweets_as_epochs[idx])
         epoch_callback(opt, e)
 
     plt.savefig('plots/trump.png')

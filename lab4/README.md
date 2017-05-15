@@ -2,7 +2,7 @@
 
 ## Usage
 
-### Train on HP
+### Train on a book
 
 From scratch
 
@@ -16,13 +16,28 @@ From a checkpoint
 python3 -OO train.py -c weights/goblet.npz sources/goblet_book.txt
 ```
 
-### Generate from HP
+### Generate a book
 
 ```bash
 python3 -OO generate.py -l 1000 sources/goblet_book.txt weights/goblet.npz
 ```
 
+## Tweets
+
+Tweets are handled in a script on their own, due to their differences with
+a regular book. (Shorter sequences, reset state every tweet, possibility
+to shuffle the tweets during training etc.)
+
+```bash
+python3 -OO trump_train.py
+```
+
+```bash
+python3 -OO trump_generate.py sources/trump/tweet_chars.npz weights/trump.npz
+```
+
 ## Testing
+
 ```bash
 python3 -m unittest
 ```
