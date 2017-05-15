@@ -7,7 +7,7 @@ from initializers import Zeros
 from network import RecurrentNeuralNetwork
 
 
-class GradientChecking(unittest.TestCase):
+class TestGradients(unittest.TestCase):
     @staticmethod
     def get_sequence(timesteps, input_size, output_size):
         np.random.seed(123)
@@ -54,10 +54,10 @@ class GradientChecking(unittest.TestCase):
                                 err[coord_worst]))
 
     def test_gradients(self):
-        input_size = 10
+        input_size = 15
         state_size = 40
         output_size = 30
-        timesteps = 200
+        timesteps = 30
 
         input_sequence, output_sequence = self.get_sequence(
             timesteps, input_size, output_size)

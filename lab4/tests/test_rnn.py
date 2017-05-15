@@ -9,7 +9,6 @@ from network import RecurrentNeuralNetwork
 class TestRNN(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.rnn = None
         cls.input_size = 2
         cls.output_size = 3
         cls.state_size = 5

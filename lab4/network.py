@@ -81,15 +81,6 @@ class RecurrentNeuralNetwork:
                                 (self.output_size - 1) * np.finfo(float).eps
         return res
 
-    def evaluate(self, inputs, train=False):
-        outputs = inputs
-        for layer in self.layers:
-            if type(layer) is BatchNormalization:
-                outputs = layer.forward(outputs, train)
-            else:
-                outputs = layer.forward(outputs)
-        return outputs
-
     def backward(self, targets):
         """
         Note: the network will use the intermediary results of
@@ -152,4 +143,5 @@ class CharRNN(RecurrentNeuralNetwork):
         res = np.empty((timesteps, self.output_size), dtype=np.int)
         for t in range(timesteps):
             res[t], prev_state = self.predict_class(x, prev_state)
+            x = res[t]
         return res, prev_state

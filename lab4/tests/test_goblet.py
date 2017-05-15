@@ -1,11 +1,11 @@
 import unittest
 from itertools import islice
-from datasets import Goblet
+from datasets import TextSource
 
 
 class TestGoblet(unittest.TestCase):
     def test_goblet(self):
-        goblet = Goblet('goblet_book.txt')
+        goblet = TextSource('sources/goblet_book.txt')
         print(goblet.encoded_text.shape)
 
         res = goblet.encode('Harry')

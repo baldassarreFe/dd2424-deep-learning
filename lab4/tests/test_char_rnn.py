@@ -1,10 +1,12 @@
 import unittest
+from tempfile import TemporaryFile
 
 import numpy as np
 
 from initializers import Xavier, Zeros
 from network import CharRNN
 from tests.test_rnn import TestRNN
+from utils import save_char_rnn, restore_char_rnn
 
 
 class TestCharRNN(TestRNN):
@@ -23,6 +25,15 @@ class TestCharRNN(TestRNN):
             initializer_b=Zeros(),
             initializer_c=Zeros()
         )
+
+    def test_save_restore(self):
+        outfile = TemporaryFile()
+        save_char_rnn(self.rnn, outfile)
+        outfile.seek(0)
+        restored = restore_char_rnn(outfile)
+        for x, y in zip(self.rnn.weights_gradients_pairs(),
+                        restored.weights_gradients_pairs()):
+            self.assertTrue(np.allclose(x[0], y[0]))
 
     def test_generate(self):
         seq, last_state = self.rnn.generate(

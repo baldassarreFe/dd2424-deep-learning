@@ -1,20 +1,18 @@
 from collections import namedtuple
 
-from sklearn import preprocessing
 import numpy as np
+from sklearn import preprocessing
 
 InputTargetSequence = namedtuple('InputTargetSequence', 'input output')
 
 
-class Goblet:
-    num_classes = 80
-
+class TextSource:
     def __init__(self, filename):
         self.char_sequence = list(self.load_text(filename))
         self.label_encoder = preprocessing.LabelBinarizer()
         self.encoded_text = self.label_encoder.fit_transform(
             self.char_sequence)
-        self.sequence_length = self.encoded_text.shape[1]
+        self.total_chars, self.num_classes = self.encoded_text.shape
 
     def encode(self, *values):
         """
@@ -38,7 +36,7 @@ class Goblet:
             return [self.decode_to_strings(s) for s in sequences]
 
     def get_sequences(self, length=25):
-        for i in range(0, self.sequence_length - length, length):
+        for i in range(0, self.total_chars - length, length):
             yield InputTargetSequence(
                 input=self.encoded_text[i:i + length],
                 output=self.encoded_text[i + 1:i + length + 1]
@@ -48,4 +46,3 @@ class Goblet:
     def load_text(filename):
         with open(filename, 'r') as f:
             return f.read()
-
