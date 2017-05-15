@@ -7,14 +7,14 @@ from initializers import Zeros
 from network import CharRNN
 
 
-def generate_text(rnn, goblet, first_char=None, initial_state=None, length=200):
+def generate_text(rnn, data, first_char=None, initial_state=None, length=200):
     if first_char is None:
         first_char = np.zeros(rnn.input_size)
         first_char[np.random.randint(0, rnn.input_size)] = 1
     if initial_state is None:
         initial_state = np.zeros(rnn.state_size)
     seq, last_state = rnn.generate(first_char, initial_state, length)
-    return goblet.decode_to_strings(seq), last_state
+    return data.decode_to_strings(seq), last_state
 
 
 def cost_plot(opt, destfile):

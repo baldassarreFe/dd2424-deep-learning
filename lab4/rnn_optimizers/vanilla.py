@@ -1,5 +1,4 @@
 import numpy as np
-from tqdm import tqdm
 
 from .optimizer import RnnOptimizer
 
@@ -16,7 +15,7 @@ class RnnVanilla(RnnOptimizer):
     def train(self, sequence_pairs, epochs=1,
               callback=None, callback_every=0,
               epoch_callback=None):
-        for _ in tqdm(range(epochs), desc='Epochs'):
+        for _ in range(epochs):
             prev_state = np.zeros(self.rnn.state_size)
             for i, sp in enumerate(sequence_pairs):
                 probs, states = self.rnn.forward(sp.input, prev_state)
@@ -39,7 +38,7 @@ class RnnVanilla(RnnOptimizer):
             if self.clip is not None:
                 grad = np.clip(grad, -self.clip, +self.clip)
             update = self.learning_rate * grad
-            #if __debug__:
+            # if __debug__:
             #    self.learning_rate_warning(weights, update)
             weights -= update
 
