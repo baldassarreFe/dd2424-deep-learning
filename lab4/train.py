@@ -4,6 +4,7 @@ from functools import partial
 
 import matplotlib.pyplot as plt
 import numpy as np
+from os.path import basename
 
 from datasets import TextSource
 from initializers import Xavier
@@ -68,12 +69,12 @@ def main(args):
           '- {} sequences of length 25'
           .format(args.source, data.total_chars,
                   data.num_classes, len(sequence_pairs)))
-    opt.train(sequence_pairs, epochs=20,
+    opt.train(sequence_pairs, epochs=40,
               callback=partial(callback, data=data, start=time.time()),
               callback_every=4321,
               epoch_callback=epoch_callback)
 
-    plt.savefig('plots/{}.png'.format(args.source))
+    plt.savefig('plots/{}.png'.format(basename(args.source)))
 
 
 if __name__ == '__main__':

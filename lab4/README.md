@@ -1,6 +1,6 @@
 # CharRNN
 
-## Usage
+## Usage on books
 
 ### Train on a book
 
@@ -22,7 +22,7 @@ python3 -OO train.py -c weights/goblet.npz sources/goblet_book.txt
 python3 -OO generate.py -l 1000 sources/goblet_book.txt weights/goblet.npz
 ```
 
-## Tweets
+## Usage on tweets
 
 Tweets are handled in a script on their own, due to their differences with
 a regular book. (Shorter sequences, reset state every tweet, possibility
@@ -36,7 +36,14 @@ python3 -OO trump_train.py
 python3 -OO trump_generate.py sources/trump/tweet_chars.npz weights/trump.npz
 ```
 
+The tweets under `sources/trump` were downloaded and extracted from
+(this repo)[https://github.com/bpb27/trump_tweet_data_archive] on 15 May 2017.
+
 ## Testing
+
+Testing includes the correct behavior of the forward and backward pass of
+an RNN, text generation from a char RNN, the gradient computations and the
+optimization steps.
 
 ```bash
 python3 -m unittest
@@ -46,9 +53,42 @@ python3 -m unittest
 
 ### Goblet
 
+Training on `sources/goblet_book.txt`:
+- 1107542 total characters
+- 80 unique characters
+- 44301 sequences of length 25
+
+After 1772040 iterations (20 epochs):
+
+![Goblet](plots/goblet.png)
+
+```txt
+happeng, they nor-usened rie looking the Gilced them, a lagk Hermione as he ever almous holled like mevers Dumbledon looking thinds stross, unfermeen.  Krinily.  He was sometion," said Harry like eggle hiving feed the Floccs, had thinn hands a was," - on him.  "This teat himself tchemes uppear at Cedric  the face.   The Deat Genound as Harry.
+"I, sovered, you paiend the took above.  It waket a first yet wlottort's robed Harry's left.  He feed way are to Chpeen the will exting to goncaring by fongigo foce onepered on crate.
+Profecting from a just - bulst sture, safe all crungly finudly. . . . ."
+"An than said," said Harry.
+"Yes; a !"  said Ron hour facting the turst forking theum, bewidevely for agudementaple of him," Harry poirt him.
+"What?"  said Harry people neck therearst to perply seen you clanted."
+"I deathed to vabres," said I say?"
+"Iry sill put unI what Fred lot.
+"Ged faces buls fann.
+Harry, not and any well be fotion.
+"Harry anyt it?  Oh dup stran fintizes the see his only seipped-looked ficeting to couldn't remak being imprecueter, and the opledore; the sulling him just in there's of the giod there.
+"Well, mon't Maxime us at World.  "Wey fay. Everyor pught his blagol.
+"What repeations los' chand.
+He's thinger dight, bigh - him.  It was futtrosh of the somechud know Volderulle over soronn; he tolled to flop as the toward rulang apoins on he to voldering with Harry Fould entered an thouge, Dumblo Chrelle a gill a werly sure of your. "But seemed it at I regraig, his. ," said Sinded nightly.  "I wast space fepped gobled hand hoor free. But he said had the grounst to have goid," he slyfiols it be would illed around any cawn's was been put the back of Harry, dis shon.
+"My merriowled that Hagrid's Harry suttering. We're will stand to the getter wey was out if let up, some his boy gave him.
+"You sowar, and that beiving to you, "Klo preatentily, you its been nien get breatiey.   They last, lisilus! Well, usgergelt.
+"arusfing, sork too back. "What not in the Grybody.
+"Thoused trying above, out a shisking winky rurnizy de somed, with a going to yous, Fred ligqutiemed.  Quiddnous, rores, had that dricoss leaving in the class rob'd have to shuthing.  "I dighind wha deady," shout, chair.  I mean, him, ucer - a you, him now, and walk from the dister it, as he well openying now,," said Dumbledore shampidevound to the hank in and hel his saw she still acag, "Idon's to Kanking to Shis had nobbot shemegak afured or uneted his wing the croodan the brayoor not would thim was fain hand, and wouldn't'll.  It was in frightly oigh of who might wan was quietly point, even an words.
+"You have firand in a shiday when the bomplipe very sleantifulsly.
+"That?"  Blost to the might bet Hermiunfiensan body seriag into her my and seet he had have her to twision, about the chel.
+Rent to nos?  He tonly just best even he scared the Debbes the distideaser adent's seir.  He pase.  They had windey of Matarrine, him try eye for into the Great Hogwarks from the hand toward
+```
+
 ### Ulysses
 
-Training on sources/ulysses.txt:
+Training on `sources/ulysses.txt`:
 - 1534227 total characters
 - 123 unique characters
 - 61369 sequences of length 25
@@ -120,7 +160,7 @@ sisiatid and would yound brats Lit him apical the
 
 ### Divina Commedia
 
-Training on sources/divina_commedia.txt:
+Training on `sources/divina_commedia.txt`:
 - 547990 total characters
 - 81 unique characters
 - 21919 sequences of length 25
@@ -208,4 +248,66 @@ O dossume
 fionna,
 e sonvesi per peamar priccinuma convazzorgò s'asche,
 che lisadi nedo di Vose al suo per che e a pere al tisse
+```
+
+### Trump's tweets
+Training on Trump's tweets:
+- 30922 tweets
+- 4360013 characters
+- 94 unique characters
+
+```txt
+@Warh_QsmurS: Fur to know!
+
+"@PorficAKMyffee: #IBumpany. Keakar withon & by Ingay? JeGli13 ILL-New and sturitic.Growgingets deem., RUThORA201% thank you.    "@GilaAmL
+
+"@GodeMealagiofehtruwngTrumpL9562: @realDonaldTrump in her cameleHing than waig Thankneys 1404) #IG2016 Govery! True Deated losten be we ne
+
+..." I hour the kne and dain the peons an 7 https://t.co/blHYNgyGo @Doivesim70:1!
+
+In The NJo!
+
+"@COBo: for the is listed will. #neakion to Say."  Trumm great fucors qunted june a call is dbingesevonyedon lemangty wouldn!", Forning eren
+
+My the problem Miborses there's up at in lasher @realDonaldTrump, you are withruss."
+
+The Brity Corslifnl. #Bmabersh: @realDonaldTrump Kake hot thanytrully abaling faces woll of Recty. https mehttps://t.co/NiU0WaNd"
+
+I have!
+
+Whate!   "@GoltAtteler: @realDonaldTrump thing you needs on Posidatieveed take. If Fitte200,Z Leador yog I reemints con n mows. Get the day
+
+"@ThmilefoCkels: @reatd gets in I chons #Pateuse"
+
+"@Nameanwil: (TRITZ fox ahd! Poom incerf Pherter @realDonaldTrump @Trickwe: @realDonaldTrump tht is beed agally cas the Pat atron, poPVory (
+
+Jegrook"   @joy1415: @realDonaldTrump Mly YOT OMLE Irain c kvatesome.
+
+Fick"      Shars no for!"  Thand netu. Mochay sistiatPGot  Trump is that they forts Selibant. Op, and oer the sue are fore Bustrob bus bes
+
+@Rlur,Tal"  From @Erorberd #Fantorss is a Merryive! the becuec.
+
+"@Trkhoxs:  I who clooked from failey frow onby mady losted. Schansen smay presidening Ill a mes. Flon the Greave the big guyte. Like DOSA A
+
+I my to peli_s the Firrus!!!" Lood making that go brmay he ads misaronial rutperess pot reating tary respitents,"
+
+So a probly then't incountingaruh wows of ly Bor they the 25 tbad a mollrows bebes hadpolling @zil7428: @realDabatient kile's tuans aned but
+
+"@PinfthaPONgC!!!!! Hen @realDonaldTrump's ond morece.
+
+It befight"
+
+.@MaFop:  At NMOON. Ar millur caney ghing! #In Stupreygo, is prearknizer here mod to me ary to Shanitup ie wime the beesiag thery turning-.
+
+New sted the be speeviot. fraity!
+
+@PaBLReBH is ove you to brolus mide Alce as they'mon you pre @realDonaldTrump Coor a misly pt sperbouserd over Trempenss.
+
+Thalls for no. Were abruaks the hole shay a Nava: @realkin  Jone nicesstan!
+
+"@katedeit.TOU NS lon't or event! Avigni Yerystel us Boneps art sups: #ClaisROTVO ACNCFOREITAT Whanch besty @recomings26: @realDonaldTrump L
+
+"@Yinp!
+
+Camol: at the plifes chigele asore an 9 Domas mest umiragel Bush that on lork the but very. @reruntiterorise @Banwryshes @Trump  http://t.co
 ```

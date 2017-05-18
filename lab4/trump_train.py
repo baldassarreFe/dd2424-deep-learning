@@ -124,6 +124,13 @@ def main():
     report = functools.partial(report_callback, start=time.time(), opt=opt,
                                tweet_per_epoch=total_tweets,
                                label_encoder=label_encoder)
+
+    print('Training on Trump\'s tweets:\n'
+          '- {} tweets\n'
+          '- {} characters\n'
+          '- {} unique characters'
+          .format(total_tweets, total_chars, num_classes))
+
     for e in range(10):
         indexes = np.arange(total_tweets)
         np.random.shuffle(indexes)
