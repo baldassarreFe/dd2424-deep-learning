@@ -58,7 +58,7 @@ Training on `sources/goblet_book.txt`:
 - 80 unique characters
 - 44301 sequences of length 25
 
-After 1772040 iterations (20 epochs):
+After 1772040 iterations (40 epochs):
 
 ![Goblet](plots/goblet.png)
 
